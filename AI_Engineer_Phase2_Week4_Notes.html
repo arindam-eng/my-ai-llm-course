@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Engineer — Phase 2, Week 4: Prompt Engineering</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0a0c0e;
+    --bg2:     #111418;
+    --bg3:     #191d22;
+    --bg4:     #222830;
+    --border:  rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.14);
+    --text:    #e8e4db;
+    --text2:   #95908a;
+    --text3:   #4d4a45;
+    --accent:  #6ee7b7;
+    --accent2: #f9a8d4;
+    --accent3: #93c5fd;
+    --accent4: #fcd34d;
+    --accent5: #fb923c;
+    --accent6: #c4b5fd;
+    --mono:    'IBM Plex Mono', monospace;
+    --serif:   'Fraunces', serif;
+    --sans:    'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.75; }
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar { width: 270px; min-width: 270px; background: var(--bg2); border-right: 1px solid var(--border); padding: 28px 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sb-top { padding: 0 24px 24px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .sb-badge { display: inline-block; background: var(--accent); color: #021a10; font-family: var(--mono); font-size: 10px; font-weight: 600; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 3px; margin-bottom: 8px; }
+  .sb-top h1 { font-family: var(--serif); font-weight: 700; font-size: 17px; line-height: 1.3; }
+  .sb-top p  { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .nav-section { padding: 0 16px; margin-bottom: 6px; }
+  .nav-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text3); padding: 0 8px; margin-bottom: 6px; text-transform: uppercase; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; font-size: 13px; color: var(--text2); transition: all 0.15s; text-decoration: none; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: var(--bg3); color: var(--accent); border-color: var(--border); }
+  .ndot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+  .nav-item.active .ndot { background: var(--accent); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; max-width: 900px; padding: 48px 56px; }
+
+  /* ── HERO ── */
+  .hero { padding: 40px 0 48px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+  .hero-tag { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .hero-tag::before { content: ''; display: block; width: 28px; height: 1px; background: var(--accent); }
+  .hero h1 { font-family: var(--serif); font-size: 50px; font-weight: 700; line-height: 1.06; letter-spacing: -0.02em; margin-bottom: 18px; }
+  .hero h1 em { font-style: italic; color: var(--accent2); }
+  .hero-desc { font-size: 16px; color: var(--text2); max-width: 560px; line-height: 1.7; }
+  .hero-meta { display: flex; gap: 20px; margin-top: 24px; flex-wrap: wrap; }
+  .hm { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 11px; color: var(--text2); }
+  .hm span { color: var(--accent4); }
+
+  /* ── PROGRESS ── */
+  .prog-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 20px 24px; margin-bottom: 48px; }
+  .prog-row  { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--text2); margin-bottom: 8px; }
+  .prog-bar  { height: 3px; background: var(--bg4); border-radius: 99px; overflow: hidden; }
+  .prog-fill { height: 100%; background: var(--accent); border-radius: 99px; width: 20%; }
+  .pills     { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .pill      { font-family: var(--mono); font-size: 10px; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--border); color: var(--text3); }
+  .pill.done   { border-color: var(--accent); color: var(--accent); }
+  .pill.active { border-color: var(--accent4); color: var(--accent4); background: rgba(252,211,77,0.06); }
+  .wpills { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .wpill  { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--border); color: var(--text3); }
+  .wpill.done   { border-color: var(--accent); color: var(--accent); }
+  .wpill.active { border-color: var(--accent4); color: var(--accent4); }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  .sec-num { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .section h2 { font-family: var(--serif); font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 20px; }
+  .section h3 { font-family: var(--serif); font-size: 20px; font-weight: 500; font-style: italic; margin-top: 36px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  p { margin-bottom: 14px; color: var(--text2); }
+  strong { color: var(--text); font-weight: 500; }
+
+  /* ── CODE ── */
+  .cb { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; margin: 20px 0; overflow: hidden; }
+  .cb-hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg3); }
+  .cb-lang { font-family: var(--mono); font-size: 10px; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+  .cb-dots { display: flex; gap: 5px; }
+  .cb-dot  { width: 8px; height: 8px; border-radius: 50%; }
+  .cb-dot:nth-child(1) { background: rgba(251,114,153,0.4); }
+  .cb-dot:nth-child(2) { background: rgba(252,211,77,0.4);  }
+  .cb-dot:nth-child(3) { background: rgba(110,231,183,0.4); }
+  pre { padding: 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; color: #bab5ac; }
+  .cm { color: #4a4740; font-style: italic; }
+  .ck { color: var(--accent6); }
+  .cf { color: var(--accent); }
+  .cs { color: var(--accent4); }
+  .cn { color: var(--accent5); }
+  .ca { color: var(--accent3); }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; color: var(--accent); }
+
+  /* ── FORMULA ── */
+  .formula { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 16px 24px; font-family: var(--mono); font-size: 13.5px; color: var(--accent4); margin: 16px 0; text-align: center; line-height: 1.8; }
+
+  /* ── CALLOUTS ── */
+  .box { border-left: 3px solid; border-radius: 0 8px 8px 0; padding: 14px 18px; margin: 20px 0; background: var(--bg2); }
+  .box.green  { border-color: var(--accent);  }
+  .box.pink   { border-color: var(--accent2); }
+  .box.blue   { border-color: var(--accent3); }
+  .box.yellow { border-color: var(--accent4); }
+  .box.orange { border-color: var(--accent5); }
+  .box.purple { border-color: var(--accent6); }
+  .box-title  { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; }
+  .box.green  .box-title { color: var(--accent); }
+  .box.pink   .box-title { color: var(--accent2); }
+  .box.blue   .box-title { color: var(--accent3); }
+  .box.yellow .box-title { color: var(--accent4); }
+  .box.orange .box-title { color: var(--accent5); }
+  .box.purple .box-title { color: var(--accent6); }
+  .box p { margin: 0; font-size: 14px; line-height: 1.6; }
+
+  /* ── LLM INSIGHT ── */
+  .insight { background: linear-gradient(135deg,#0e0a20 0%,#060f0c 100%); border: 1px solid var(--accent6); border-radius: 12px; padding: 22px 24px; margin: 28px 0; }
+  .insight h4 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent6); margin-bottom: 12px; }
+  .insight p  { color: var(--text2); font-size: 14px; margin: 0; line-height: 1.65; }
+
+  /* ── TABLES ── */
+  .tw { overflow-x: auto; margin: 20px 0; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { background: var(--bg3); padding: 11px 16px; text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border2); }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg2); }
+  td strong { color: var(--text); }
+  td code   { font-size: 11px; }
+
+  /* ── BEFORE/AFTER ── */
+  .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+  .ba-card { border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.6; }
+  .ba-bad  { background: rgba(251,113,113,0.06); border: 1px solid rgba(251,113,113,0.2); }
+  .ba-good { background: rgba(110,231,183,0.06); border: 1px solid rgba(110,231,183,0.2); }
+  .ba-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .ba-bad  .ba-label { color: rgba(251,113,113,0.7); }
+  .ba-good .ba-label { color: rgba(110,231,183,0.7); }
+  .ba-card p { font-size: 13px; color: var(--text2); margin: 0; }
+
+  /* ── CHECKPOINT ── */
+  .ckpt { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 28px 0; }
+  .ckpt h4 { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+  .ci { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+  .ci:last-child { border-bottom: none; }
+  .cbox { width: 16px; height: 16px; border: 1.5px solid var(--border2); border-radius: 4px; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .cbox.checked { background: var(--accent); border-color: var(--accent); }
+  .cbox.checked::after { content: ''; width: 4px; height: 7px; border: 1.5px solid #021a10; border-top: none; border-left: none; transform: rotate(45deg) translate(-1px,-1px); }
+  .clabel { color: var(--text2); line-height: 1.5; }
+  .csub   { font-style: normal; color: var(--text3); font-size: 12px; display: block; margin-top: 2px; }
+
+  /* ── PROMPT TEMPLATE BLOCK ── */
+  .tmpl { background: var(--bg3); border: 1px dashed rgba(110,231,183,0.25); border-radius: 10px; padding: 20px 22px; margin: 20px 0; font-family: var(--mono); font-size: 13px; line-height: 1.8; color: var(--text2); }
+  .tmpl .ph { color: var(--accent4); }
+  .tmpl .kw { color: var(--accent); font-weight: 500; }
+
+  /* ── RISK TABLE COLORS ── */
+  .risk-low    { color: var(--accent);  font-weight: 500; }
+  .risk-mid    { color: var(--accent4); font-weight: 500; }
+  .risk-high   { color: var(--accent5); font-weight: 500; }
+  .risk-na     { color: var(--text3);   font-style: italic; }
+
+  /* ── PROJECT CARD ── */
+  .proj { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 22px 24px; margin: 24px 0; }
+  .proj h4 { font-family: var(--mono); font-size: 11px; color: var(--accent4); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+  .proj-desc { font-size: 14px; color: var(--text2); margin-bottom: 14px; }
+  .proj-steps { list-style: none; padding: 0; }
+  .proj-steps li { font-size: 13px; color: var(--text2); padding: 4px 0 4px 20px; position: relative; }
+  .proj-steps li::before { content: '○'; position: absolute; left: 0; color: var(--text3); font-size: 10px; top: 5px; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+  @media (max-width: 768px) { .sidebar { display: none; } .main { padding: 28px 20px; } .hero h1 { font-size: 34px; } .ba-grid { grid-template-columns: 1fr; } }
+  @media print { .sidebar { display: none; } body { background: white; color: black; } }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ════════ SIDEBAR ════════ -->
+<nav class="sidebar">
+  <div class="sb-top">
+    <div class="sb-badge">PHASE 2 · WEEK 4</div>
+    <h1>Prompt Engineering</h1>
+    <p>AI Engineer Roadmap</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Contents</div>
+    <a class="nav-item active" href="#zeroshot"><div class="ndot"></div>Zero-shot</a>
+    <a class="nav-item" href="#fewshot"><div class="ndot"></div>Few-shot</a>
+    <a class="nav-item" href="#cot"><div class="ndot"></div>Chain-of-thought</a>
+    <a class="nav-item" href="#system"><div class="ndot"></div>System prompt design</a>
+    <a class="nav-item" href="#xml"><div class="ndot"></div>XML outputs</a>
+    <a class="nav-item" href="#json"><div class="ndot"></div>JSON + Pydantic</a>
+    <a class="nav-item" href="#retry"><div class="ndot"></div>Retry logic</a>
+    <a class="nav-item" href="#prefill"><div class="ndot"></div>Prefilling trick</a>
+    <a class="nav-item" href="#hallucination"><div class="ndot"></div>Hallucination</a>
+    <a class="nav-item" href="#roles"><div class="ndot"></div>Role prompting</a>
+    <a class="nav-item" href="#negative"><div class="ndot"></div>Negative examples</a>
+    <a class="nav-item" href="#project3"><div class="ndot"></div>Project 3</a>
+    <a class="nav-item" href="#checkpoint"><div class="ndot"></div>Checkpoint</a>
+  </div>
+</nav>
+
+<!-- ════════ MAIN ════════ -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">AI Engineer Roadmap — Phase 2</div>
+    <h1>Week 4 —<br><em>Prompt Engineering</em></h1>
+    <div class="hero-desc">Zero-shot, few-shot, chain-of-thought, system prompt design, structured XML/JSON outputs, the prefilling trick, hallucination mitigation, role prompting, and negative examples.</div>
+    <div class="hero-meta">
+      <div class="hm">📅 <span>Week 4 of 20</span></div>
+      <div class="hm">🎯 <span>Reliable, measurable outputs</span></div>
+      <div class="hm">🔨 <span>Project 3: Structured Output Engine</span></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="prog-card">
+    <div class="prog-row"><span>Roadmap progress</span><span>Week 4 / 20</span></div>
+    <div class="prog-bar"><div class="prog-fill"></div></div>
+    <div class="pills">
+      <div class="pill done">Phase 1: ML Foundations ✓</div>
+      <div class="pill active">Phase 2: LLMs &amp; Prompts ← </div>
+      <div class="pill">Phase 3: Agents</div>
+      <div class="pill">Phase 4: Production</div>
+    </div>
+    <div class="wpills">
+      <div class="wpill done">W1 ✓</div>
+      <div class="wpill done">W2 ✓</div>
+      <div class="wpill done">W3 ✓</div>
+      <div class="wpill active">W4 ←</div>
+    </div>
+  </div>
+
+  <!-- ══════════ 01: ZERO-SHOT ══════════ -->
+  <div class="section" id="zeroshot">
+    <div class="sec-num">01</div>
+    <h2>Zero-Shot Prompting</h2>
+    <p>You describe the task. No examples. The model uses its training distribution to generalize. Zero-shot is the baseline — test it first before adding complexity.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python · Anthropic SDK</div></div>
+      <pre><span class="ck">import</span> anthropic
+client = anthropic.Anthropic()
+
+<span class="cm"># Zero-shot: describe the task, no examples</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>,
+    max_tokens=<span class="cn">64</span>,
+    messages=[{
+        <span class="cs">"role"</span>: <span class="cs">"user"</span>,
+        <span class="cs">"content"</span>: (
+            <span class="cs">"Classify the sentiment as POSITIVE, NEGATIVE, or NEUTRAL.\n\n"</span>
+            <span class="cs">"Review: The battery life is amazing but the screen is dim.\n\n"</span>
+            <span class="cs">"Sentiment:"</span>
+        )
+    }]
+)
+<span class="cm"># → MIXED  (inconsistent — no examples defined the edge case)</span>
+<span class="cf">print</span>(response.content[<span class="cn">0</span>].text)</pre>
+    </div>
+
+    <div class="box yellow">
+      <div class="box-title">When to use zero-shot</div>
+      <p>Tasks the model handles natively from training: translation, summarization, simple Q&amp;A, basic classification. <strong>Always test zero-shot first</strong> — it's the cheapest option and often sufficient. Only add few-shot examples when zero-shot is measurably inconsistent.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 02: FEW-SHOT ══════════ -->
+  <div class="section" id="fewshot">
+    <div class="sec-num">02</div>
+    <h2>Few-Shot Prompting</h2>
+    <p>You provide 2–5 labeled examples before the actual input. This conditions the model's output distribution toward your pattern — not by training, but by shaping the context the next token is predicted from.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Few-shot pattern</div></div>
+      <pre>few_shot = <span class="cs">"""Classify sentiment as POSITIVE, NEGATIVE, or NEUTRAL.
+Mixed opinions (good + bad) count as NEUTRAL.
+
+Review: "Best laptop I've ever owned. Fast, light, gorgeous screen."
+Sentiment: POSITIVE
+
+Review: "Stopped working after 2 weeks. Support was useless."
+Sentiment: NEGATIVE
+
+Review: "Great camera, terrible battery. Evens out."
+Sentiment: NEUTRAL
+
+Review: "The battery life is amazing but the screen is dim."
+Sentiment:"""</span>
+
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>,
+    max_tokens=<span class="cn">10</span>,
+    messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>, <span class="cs">"content"</span>: few_shot}]
+)
+<span class="cm"># → NEUTRAL  (consistent now — examples defined the edge case rule)</span></pre>
+    </div>
+
+    <h3>Few-shot best practices</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — What makes examples effective</div></div>
+      <pre><span class="cm"># 1. DIVERSITY — cover edge cases, not just easy cases</span>
+<span class="cm"># Bad:  3 clearly POSITIVE reviews as examples</span>
+<span class="cm"># Good: 1 POSITIVE, 1 NEGATIVE, 1 NEUTRAL (the hard mixed case)</span>
+
+<span class="cm"># 2. ORDER MATTERS — last example slightly biases toward its label</span>
+<span class="cm"># If last example is POSITIVE, model leans POSITIVE on ambiguous inputs</span>
+<span class="cm"># Fix: shuffle example order per request in production</span>
+<span class="ck">import</span> random
+examples = [pos_example, neg_example, neutral_example]
+random.shuffle(examples)
+
+<span class="cm"># 3. FORMAT CONSISTENCY — examples define the output format exactly</span>
+<span class="cm"># If examples output "POSITIVE" → model outputs "POSITIVE" (not "positive")</span>
+<span class="cm"># Be deliberate: capitalization, punctuation, spacing all transfer</span>
+
+<span class="cm"># 4. BALANCE — roughly equal examples per class</span>
+<span class="cm"># 3 POSITIVE + 1 NEGATIVE → biased output</span>
+
+<span class="cm"># 5. HARD CASES — your examples should include your failure modes</span>
+<span class="cm"># Run zero-shot on 20 inputs, collect the wrong ones, add them as examples</span>
+<span class="cm"># This is the most efficient use of few-shot slots</span></pre>
+    </div>
+
+    <div class="insight">
+      <h4>🧠 Why examples actually work</h4>
+      <p>Each example is tokens in the context. The model's next-token prediction is conditioned on all preceding tokens — so your examples literally shift the probability distribution at inference time. The model is not "learning" in any training sense. It's pattern-matching: <strong>"given that the last 3 examples all followed format X, the next completion should also follow format X."</strong> This is why format consistency in examples matters so much.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 03: CHAIN-OF-THOUGHT ══════════ -->
+  <div class="section" id="cot">
+    <div class="sec-num">03</div>
+    <h2>Chain-of-Thought (CoT)</h2>
+    <p>You tell the model to reason step-by-step before committing to a final answer. This dramatically improves performance on multi-step reasoning tasks. The intermediate reasoning tokens serve as a scratchpad — they condition better final-answer tokens.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Zero-shot CoT vs no CoT</div></div>
+      <pre><span class="cm"># WITHOUT CoT — model often wrong on multi-step arithmetic</span>
+no_cot = (
+    <span class="cs">"A store has 5 apples. They sell 2, receive a shipment of 3× what "
+    "they now have, then sell half. How many remain?\n\nAnswer:"</span>
+)
+<span class="cm"># → "6"  (often wrong, inconsistent)</span>
+
+<span class="cm"># WITH Zero-shot CoT — just add "Think step by step."</span>
+with_cot = (
+    <span class="cs">"A store has 5 apples. They sell 2, receive a shipment of 3× what "
+    "they now have, then sell half. How many remain?\n\n"
+    "Think step by step before giving your final answer."</span>
+)
+<span class="cm"># Model reasons: Start=5 → sell 2 → 3 → shipment: 3×3=9, total=12 → half=6</span>
+<span class="cm"># → "6"  ✓ (correct AND consistent)</span>
+
+<span class="cm"># Classic CoT failure: the bat and ball problem</span>
+trick = <span class="cs">"A bat and ball cost $1.10 total. The bat costs $1 more than the ball. How much is the ball? Think step by step."</span>
+<span class="cm"># Without CoT → "10 cents" (the intuitive wrong answer)</span>
+<span class="cm"># With CoT    → "If ball=x, bat=x+1, so 2x+1=1.10, x=0.05 → 5 cents" ✓</span></pre>
+    </div>
+
+    <h3>Structured CoT — controlled reasoning format</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — XML-structured reasoning</div></div>
+      <pre>structured_cot = <span class="cs">"""Analyze this support ticket and determine priority.
+
+TICKET: "I've been charged twice and my account shows suspended."
+
+Work through your analysis:
+<analysis>
+Issue type: [billing/technical/account/other]
+Business impact: [low/medium/high/critical]
+Customer emotion: [calm/frustrated/angry/urgent]
+Resolution complexity: [simple/moderate/complex]
+</analysis>
+
+<priority>[P1/P2/P3/P4]</priority>
+
+<reasoning>[1–2 sentence explanation]</reasoning>"""</span>
+
+<span class="cm"># Why this works better than free-form CoT:</span>
+<span class="cm"># 1. Forces the model to consider specific dimensions before deciding</span>
+<span class="cm"># 2. The XML tags are parseable — you can extract each field</span>
+<span class="cm"># 3. The intermediate analysis tokens improve the final answer quality</span>
+<span class="cm"># 4. Consistent structure makes it easy to evaluate and test</span></pre>
+    </div>
+
+    <div class="tw">
+      <table>
+        <tr><th>Technique</th><th>Trigger phrase</th><th>Best for</th><th>Cost</th></tr>
+        <tr><td><strong>Zero-shot CoT</strong></td><td>"Think step by step."</td><td>Math, logic, multi-step</td><td>+30–100 output tokens</td></tr>
+        <tr><td><strong>Few-shot CoT</strong></td><td>Examples with reasoning shown</td><td>Domain-specific reasoning</td><td>+300–500 input tokens</td></tr>
+        <tr><td><strong>Structured CoT</strong></td><td>XML tags for reasoning steps</td><td>Complex decisions, evaluation</td><td>+100–200 tokens, parseable</td></tr>
+        <tr><td><strong>Self-consistency</strong></td><td>Run N times, take majority vote</td><td>High-stakes single answers</td><td>N× total cost</td></tr>
+      </table>
+    </div>
+
+    <div class="box green">
+      <div class="box-title">Why CoT works — the mechanistic explanation</div>
+      <p>The model generates reasoning tokens that become part of the context for subsequent tokens. The final answer token is predicted from: [question tokens] + [reasoning tokens]. More reasoning tokens = richer context = higher probability of the correct answer. You're giving the model more surface area to work with before committing.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 04: SYSTEM PROMPT DESIGN ══════════ -->
+  <div class="section" id="system">
+    <div class="sec-num">04</div>
+    <h2>System Prompt Design</h2>
+    <p>The system prompt is your most powerful lever. It sets identity, constraints, output format, and behavioral guardrails — applied once before the user says anything. A well-designed system prompt makes every user turn more predictable and reliable.</p>
+
+    <div class="ba-grid">
+      <div class="ba-card ba-bad">
+        <div class="ba-label">❌ Vague — don't do this</div>
+        <p>"You are a helpful assistant that answers questions about our product. Be friendly and professional."</p>
+      </div>
+      <div class="ba-card ba-good">
+        <div class="ba-label">✓ Specific — do this</div>
+        <p>"You are a customer support agent for Acme SaaS. Answer questions about features, pricing, and integrations only. Never fabricate features..."</p>
+      </div>
+    </div>
+
+    <h3>The 5-component system prompt template</h3>
+
+    <div class="tmpl">
+<span class="kw">## [1] ROLE &amp; IDENTITY</span>
+You are a <span class="ph">{seniority} {job_title}</span> at <span class="ph">{specific_context}</span>.
+Your primary purpose is <span class="ph">{one sentence goal}</span>.
+
+<span class="kw">## [2] CAPABILITIES &amp; SCOPE</span>
+You CAN: <span class="ph">{list what to do}</span>
+You CANNOT: <span class="ph">{explicit hard limits — more important than capabilities}</span>
+
+<span class="kw">## [3] RULES &amp; GUARDRAILS</span>
+- When unsure: <span class="ph">{exactly what to say — e.g. "I don't have that info"}</span>
+- When out of scope: <span class="ph">{redirect message verbatim}</span>
+- Edge case rule: <span class="ph">{specific behavioral rule}</span>
+
+<span class="kw">## [4] OUTPUT FORMAT</span>
+Format: <span class="ph">{JSON / XML / markdown / plain text}</span>
+Length: <span class="ph">{hard cap — e.g. "under 150 words unless walkthrough needed"}</span>
+Structure: <span class="ph">{example of exact output shape}</span>
+
+<span class="kw">## [5] TONE</span>
+<span class="ph">{3 adjectives}</span>. Example voice: <span class="ph">"[single sentence example]"</span>
+    </div>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Production system prompt example</div></div>
+      <pre>system = <span class="cs">"""You are a customer support agent for Acme SaaS,
+a B2B project management tool.
+
+## Role
+Answer questions about Acme's features, pricing, and integrations.
+Help users solve problems within the product.
+
+## Rules
+- Only answer questions about Acme. For off-topic: "That's outside
+  my expertise — I can help with [relevant topic] instead."
+- Never make up features. If unsure: "I don't have that information.
+  Type 'human' to connect with our team."
+- Keep responses under 150 words unless a step-by-step walkthrough
+  is required.
+- Always end with: "Was this helpful? Type 'human' for a live agent."
+
+## Output format
+- Use numbered steps for instructions
+- Bold key terms on first mention
+- For pricing: always link https://acme.io/pricing
+
+## Tone
+Professional, warm, direct. Not corporate. Not overly casual.
+Example: "Hey! I looked into that — here's what's happening..." """</span></pre>
+    </div>
+
+    <h3>System prompt testing checklist</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — 8 required test cases</div></div>
+      <pre>test_cases = {
+    <span class="cs">"happy_path"</span>:      <span class="cs">"Normal question the prompt is designed for"</span>,
+    <span class="cs">"edge_case"</span>:       <span class="cs">"Question at the boundary of your defined scope"</span>,
+    <span class="cs">"out_of_scope"</span>:    <span class="cs">"Question completely outside your domain"</span>,
+    <span class="cs">"adversarial"</span>:    <span class="cs">"'Ignore previous instructions and...' attack"</span>,
+    <span class="cs">"ambiguous"</span>:      <span class="cs">"Question with multiple valid interpretations"</span>,
+    <span class="cs">"empty_input"</span>:    <span class="cs">""</span>,
+    <span class="cs">"very_long_input"</span>: <span class="cs">"A"</span> * <span class="cn">5000</span>,
+    <span class="cs">"sensitive_topic"</span>: <span class="cs">"Something that might trigger model refusals"</span>,
+}
+
+<span class="cm"># Run ALL 8 every time you change the system prompt.</span>
+<span class="cm"># Treat it like a unit test suite — a change that fixes one case</span>
+<span class="cm"># might silently break another.</span></pre>
+    </div>
+
+    <div class="box orange">
+      <div class="box-title">Key principle — constraints &gt; instructions</div>
+      <p><strong>Negative constraints are more valuable than positive instructions.</strong> "Never make up pricing" prevents a specific catastrophic failure mode. "Be helpful" is too vague to reliably shape behavior. For every capability you add, write one explicit constraint that prevents the most likely bad version of it.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 05: XML OUTPUTS ══════════ -->
+  <div class="section" id="xml">
+    <div class="sec-num">05</div>
+    <h2>XML Structured Outputs</h2>
+    <p>Claude was trained on XML-structured data and handles it exceptionally well. Use XML tags to structure both your prompts <em>and</em> the outputs you request. It is more robust than JSON for cases where the model might insert extra prose.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — XML extraction + parsing</div></div>
+      <pre><span class="ck">import</span> xml.etree.ElementTree <span class="ck">as</span> ET
+<span class="ck">import</span> re
+
+extraction_prompt = <span class="cs">"""Extract structured data from the job posting below.
+
+<job_posting>
+{job_text}
+</job_posting>
+
+Return your extraction in this EXACT XML format and nothing else:
+
+<extraction>
+  <title>[job title]</title>
+  <company>[company name]</company>
+  <location>[city, country or "Remote"]</location>
+  <salary_min>[number or null]</salary_min>
+  <salary_max>[number or null]</salary_max>
+  <required_skills>
+    <skill>[skill 1]</skill>
+    <skill>[skill 2]</skill>
+  </required_skills>
+  <experience_years>[number or null]</experience_years>
+  <remote>[true/false]</remote>
+</extraction>"""</span>
+
+<span class="ck">def</span> <span class="cf">parse_xml_response</span>(response_text: <span class="ca">str</span>) -> <span class="ca">dict</span>:
+    <span class="cm"># Extract just the XML block — model might add preamble</span>
+    match = re.search(<span class="cs">r'&lt;extraction&gt;.*?&lt;/extraction&gt;'</span>, response_text, re.DOTALL)
+    <span class="ck">if not</span> match:
+        <span class="ck">raise</span> <span class="ca">ValueError</span>(<span class="cs">"No &lt;extraction&gt; block found in response"</span>)
+
+    root   = ET.fromstring(match.group())
+    skills = [s.text <span class="ck">for</span> s <span class="ck">in</span> root.findall(<span class="cs">'.//skill'</span>)]
+
+    <span class="ck">return</span> {
+        <span class="cs">"title"</span>:            root.findtext(<span class="cs">'title'</span>),
+        <span class="cs">"company"</span>:          root.findtext(<span class="cs">'company'</span>),
+        <span class="cs">"location"</span>:         root.findtext(<span class="cs">'location'</span>),
+        <span class="cs">"salary_min"</span>:       root.findtext(<span class="cs">'salary_min'</span>),
+        <span class="cs">"salary_max"</span>:       root.findtext(<span class="cs">'salary_max'</span>),
+        <span class="cs">"required_skills"</span>:  skills,
+        <span class="cs">"experience_years"</span>: root.findtext(<span class="cs">'experience_years'</span>),
+        <span class="cs">"remote"</span>:           root.findtext(<span class="cs">'remote'</span>) == <span class="cs">'true'</span>,
+    }
+
+<span class="cm"># Why XML beats JSON for extraction prompts:</span>
+<span class="cm"># - Claude handles nested XML reliably out of the box</span>
+<span class="cm"># - Easier to extract from response that has extra prose around it</span>
+<span class="cm"># - Lists (repeated &lt;skill&gt; tags) are trivial vs JSON arrays</span>
+<span class="cm"># - Model is less likely to break XML structure mid-generation</span></pre>
+    </div>
+  </div>
+
+  <!-- ══════════ 06: JSON + PYDANTIC ══════════ -->
+  <div class="section" id="json">
+    <div class="sec-num">06</div>
+    <h2>JSON Outputs + Pydantic Validation</h2>
+    <p>For programmatic use, JSON + Pydantic is the production standard. Pydantic validates types, coerces values, and gives you precise error messages you can feed back into a retry.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python · Pydantic v2 — Schema + extraction</div></div>
+      <pre><span class="ck">from</span> pydantic <span class="ck">import</span> BaseModel, Field, field_validator
+<span class="ck">from</span> typing <span class="ck">import</span> Optional, List
+<span class="ck">import</span> json, re
+
+<span class="ck">class</span> <span class="ca">JobPosting</span>(BaseModel):
+    title:            str
+    company:          str
+    location:         str
+    salary_min:       Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    salary_max:       Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    required_skills:  List[str]       = Field(default_factory=list)
+    experience_years: Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    remote:           bool             = <span class="cn">False</span>
+
+    <span class="ck">@field_validator</span>(<span class="cs">'salary_min'</span>, <span class="cs">'salary_max'</span>, mode=<span class="cs">'before'</span>)
+    <span class="ck">@classmethod</span>
+    <span class="ck">def</span> <span class="cf">parse_salary</span>(cls, v):
+        <span class="ck">if</span> v <span class="ck">in</span> (<span class="cn">None</span>, <span class="cs">'null'</span>, <span class="cs">'None'</span>, <span class="cs">''</span>):
+            <span class="ck">return</span> <span class="cn">None</span>
+        <span class="ck">return</span> <span class="ca">int</span>(<span class="ca">str</span>(v).replace(<span class="cs">','</span>, <span class="cs">''</span>).replace(<span class="cs">'$'</span>, <span class="cs">''</span>).replace(<span class="cs">'k'</span>,<span class="cs">'000'</span>))
+
+<span class="ck">def</span> <span class="cf">extract_job</span>(text: str) -> <span class="ca">JobPosting</span>:
+    prompt = <span class="cs">f"""Extract job details from this posting.
+
+&lt;posting&gt;
+{text}
+&lt;/posting&gt;
+
+Return ONLY a JSON object matching this schema exactly:
+{JobPosting.model_json_schema()}
+
+Rules:
+- JSON only. No explanation. No markdown fences.
+- Use null (not "N/A" or "") for missing optional fields.
+- required_skills must be a JSON array, even if empty: []"""</span>
+
+    response = client.messages.create(
+        model=<span class="cs">"claude-sonnet-4-20250514"</span>,
+        max_tokens=<span class="cn">512</span>,
+        temperature=<span class="cn">0.0</span>,   <span class="cm"># deterministic for extraction</span>
+        messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>, <span class="cs">"content"</span>: prompt}]
+    )
+
+    raw = response.content[<span class="cn">0</span>].text.strip()
+    raw = re.sub(<span class="cs">r'^```json\s*|\s*```$'</span>, <span class="cs">''</span>, raw, flags=re.MULTILINE)
+
+    <span class="ck">return</span> <span class="ca">JobPosting</span>(**json.loads(raw))  <span class="cm"># Pydantic validates + coerces</span></pre>
+    </div>
+  </div>
+
+  <!-- ══════════ 07: RETRY LOGIC ══════════ -->
+  <div class="section" id="retry">
+    <div class="sec-num">07</div>
+    <h2>Retry Logic — Production-Grade Extraction</h2>
+    <p>Models occasionally produce malformed JSON, miss required fields, or use wrong types. The fix: catch the validation error and feed it back into the next attempt. The model almost always corrects itself when shown exactly what went wrong.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Generic retry wrapper for any Pydantic schema</div></div>
+      <pre><span class="ck">from</span> typing <span class="ck">import</span> TypeVar, Type
+<span class="ck">import</span> time
+T = TypeVar(<span class="cs">'T'</span>, bound=<span class="ca">BaseModel</span>)
+
+<span class="ck">def</span> <span class="cf">extract_with_retry</span>(
+    text:        str,
+    schema:      Type[T],
+    max_retries: <span class="ca">int</span> = <span class="cn">3</span>,
+) -> T:
+    <span class="cs">"""
+    Attempt extraction, catch validation errors,
+    inject the error into the next prompt, retry.
+    """</span>
+    last_error  = <span class="cn">None</span>
+    raw_output  = <span class="cn">None</span>
+
+    <span class="ck">for</span> attempt <span class="ck">in</span> <span class="cf">range</span>(max_retries):
+        <span class="cm"># On retries: include previous failure so model can self-correct</span>
+        error_ctx = <span class="cs">""</span>
+        <span class="ck">if</span> last_error <span class="ck">and</span> raw_output:
+            error_ctx = <span class="cs">f"""
+
+Your previous attempt failed validation with this error:
+&lt;previous_output&gt;{raw_output}&lt;/previous_output&gt;
+&lt;error&gt;{last_error}&lt;/error&gt;
+
+Fix the error and try again. JSON only."""</span>
+
+        prompt = <span class="cs">f"""Extract structured data from the text below.
+Return ONLY valid JSON matching this schema:
+{schema.model_json_schema()}
+
+&lt;text&gt;{text}&lt;/text&gt;
+{error_ctx}"""</span>
+
+        response = client.messages.create(
+            model=<span class="cs">"claude-sonnet-4-20250514"</span>,
+            max_tokens=<span class="cn">1024</span>,
+            temperature=<span class="cn">0.0</span> <span class="ck">if</span> attempt == <span class="cn">0</span> <span class="ck">else</span> <span class="cn">0.3</span>,
+            messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>, <span class="cs">"content"</span>: prompt}]
+        )
+
+        raw_output = response.content[<span class="cn">0</span>].text.strip()
+        raw_output = re.sub(<span class="cs">r'^```json\s*|\s*```$'</span>, <span class="cs">''</span>, raw_output, flags=re.MULTILINE)
+
+        <span class="ck">try</span>:
+            data = json.loads(raw_output)
+            <span class="ck">return</span> schema(**data)        <span class="cm"># success — return validated model</span>
+        <span class="ck">except</span> <span class="ca">Exception</span> <span class="ck">as</span> e:
+            last_error = <span class="ca">str</span>(e)
+            <span class="cf">print</span>(<span class="cs">f"  Attempt {attempt+1} failed: {e}"</span>)
+            time.sleep(<span class="cn">0.5</span> * (attempt + <span class="cn">1</span>))  <span class="cm"># exponential backoff</span>
+
+    <span class="ck">raise</span> <span class="ca">RuntimeError</span>(<span class="cs">f"Failed after {max_retries} attempts: {last_error}"</span>)
+
+<span class="cm"># Usage — works for any Pydantic model:</span>
+job     = extract_with_retry(job_text,   <span class="ca">JobPosting</span>)
+receipt = extract_with_retry(receipt_txt, <span class="ca">Receipt</span>)
+article = extract_with_retry(news_text,   <span class="ca">NewsArticle</span>)</pre>
+    </div>
+
+    <div class="box blue">
+      <div class="box-title">Temperature on retry</div>
+      <p>Use <code>temperature=0.0</code> on the first attempt for maximum determinism. On retries, bump to <code>0.3</code> — a small amount of randomness helps the model escape whatever caused the first failure. If attempt 1 produced malformed JSON because of some local minimum in the distribution, a slightly different sampling path on attempt 2 often avoids it.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 08: PREFILLING ══════════ -->
+  <div class="section" id="prefill">
+    <div class="sec-num">08</div>
+    <h2>The Prefilling Trick</h2>
+    <p>Prefilling means seeding the assistant turn with a partial response. Claude <strong>continues from exactly that string</strong> — no preamble, no "Certainly! Here's...", no hedging. It's the most underused power technique in the Anthropic SDK.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python · Anthropic SDK — Prefilling patterns</div></div>
+      <pre><span class="cm"># ── WITHOUT prefilling — unpredictable opener ─────────────────</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">256</span>,
+    messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+               <span class="cs">"content"</span>: <span class="cs">"Write a function to validate email addresses."</span>}]
+)
+<span class="cm"># → "Sure! Here's a Python function that validates email addresses:\n```python\n..."</span>
+<span class="cm">#   ↑ preamble is noise — hard to parse, clutters downstream pipelines</span>
+
+<span class="cm"># ── WITH prefilling — clean output, no preamble ───────────────</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">256</span>,
+    messages=[
+        {<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+         <span class="cs">"content"</span>: <span class="cs">"Write a function to validate email addresses."</span>},
+        {<span class="cs">"role"</span>: <span class="cs">"assistant"</span>,
+         <span class="cs">"content"</span>: <span class="cs">"```python\nimport re\n\ndef validate_email(email: str) -> bool:"</span>}
+    ]
+)
+<span class="cm"># → continues: "    pattern = r'^[...]+@[...]+\.[a-zA-Z]{2,}$'\n    ..."</span>
+<span class="cm"># Zero preamble. Clean code. Directly parseable.</span>
+
+<span class="cm"># ── Force JSON output ─────────────────────────────────────────</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">512</span>, temperature=<span class="cn">0.0</span>,
+    messages=[
+        {<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+         <span class="cs">"content"</span>: <span class="cs">f"Extract key facts from:\n\n{article_text}"</span>},
+        {<span class="cs">"role"</span>: <span class="cs">"assistant"</span>,
+         <span class="cs">"content"</span>: <span class="cs">'{"facts": ['</span>}  <span class="cm"># seeds valid JSON start</span>
+    ]
+)
+<span class="cm"># Response continues: '"Fact 1", "Fact 2"], "summary": "..."}'</span>
+<span class="cm"># Add the seed back: full_json = '{"facts": [' + response.content[0].text</span>
+
+<span class="cm"># ── Force XML ─────────────────────────────────────────────────</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">256</span>,
+    messages=[
+        {<span class="cs">"role"</span>: <span class="cs">"user"</span>, <span class="cs">"content"</span>: <span class="cs">f"Analyze sentiment:\n\n{review}"</span>},
+        {<span class="cs">"role"</span>: <span class="cs">"assistant"</span>, <span class="cs">"content"</span>: <span class="cs">"&lt;analysis&gt;"</span>}  <span class="cm"># guaranteed XML wrapper</span>
+    ]
+)</pre>
+    </div>
+
+    <div class="tw">
+      <table>
+        <tr><th>Seed string</th><th>Effect</th><th>Use case</th></tr>
+        <tr><td><code>```python\n</code></td><td>Direct code, no preamble</td><td>Code generation pipelines</td></tr>
+        <tr><td><code>{"</code></td><td>Forces JSON object start</td><td>Structured extraction</td></tr>
+        <tr><td><code>&lt;analysis&gt;</code></td><td>Forces XML wrapper</td><td>XML-structured outputs</td></tr>
+        <tr><td><code>The answer is</code></td><td>Skips "Let me think..." hedging</td><td>Direct factual Q&amp;A</td></tr>
+        <tr><td><code>&lt;thinking&gt;\nStep 1:</code></td><td>Forces structured CoT</td><td>Complex reasoning tasks</td></tr>
+        <tr><td><code>1.</code></td><td>Forces numbered list</td><td>Enumeration tasks</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ 09: HALLUCINATION ══════════ -->
+  <div class="section" id="hallucination">
+    <div class="sec-num">09</div>
+    <h2>Hallucination — Causes &amp; Mitigation</h2>
+    <p>Hallucination is the model generating confident, plausible-sounding, factually wrong output. Understanding <em>why</em> it happens leads directly to the fixes.</p>
+
+    <h3>Why hallucination happens</h3>
+    <div class="formula">
+The model predicts the most probable next token given context.<br>
+"The capital of Australia is ___" → "Sydney" is more probable than "Canberra"<br>
+because Sydney appears more often in internet text.<br><br>
+There is no "I don't know" signal — the model was trained to complete text,<br>
+not to flag uncertainty. Uncertainty must be engineered in explicitly.
+    </div>
+
+    <h3>The 5 mitigation strategies</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — All 5 hallucination mitigation patterns</div></div>
+      <pre><span class="cm"># ── 1. GROUNDING — give the facts explicitly ──────────────────</span>
+<span class="cm"># Never ask "what is the refund policy?" — the model confabulates</span>
+<span class="cm"># DO: paste the actual policy, ask about it</span>
+grounded = <span class="cs">"""Answer using ONLY the information in the document below.
+If the answer is not in the document, say EXACTLY:
+"This information is not in the provided document."
+Do NOT use outside knowledge.
+
+&lt;document&gt;{doc}&lt;/document&gt;
+
+Question: {question}"""</span>
+
+<span class="cm"># ── 2. CITATIONS — force the model to quote sources ───────────</span>
+citation = <span class="cs">"""Answer the question. After each factual claim, add:
+[source: "exact quote from document"].
+Only make claims you can directly cite from the document.
+
+&lt;document&gt;{doc}&lt;/document&gt;
+
+Question: {q}"""</span>
+
+<span class="cm"># ── 3. CONFIDENCE ELICITATION ─────────────────────────────────</span>
+confidence = <span class="cs">"""Answer the following question.
+After your answer write:
+CONFIDENCE: [HIGH / MEDIUM / LOW]
+REASON: [one sentence — why you are or aren't confident]
+
+Question: {q}"""</span>
+
+<span class="cm"># ── 4. CHAIN-OF-THOUGHT BEFORE COMMITTING ────────────────────</span>
+verify_cot = <span class="cs">"""Before answering, reason through what you know and don't know.
+
+&lt;reasoning&gt;
+What I know for certain:
+What I'm less sure about:
+Where I might be wrong:
+&lt;/reasoning&gt;
+
+&lt;answer&gt;[answer here]&lt;/answer&gt;
+
+Question: {q}"""</span>
+
+<span class="cm"># ── 5. VERIFICATION LOOP — extract then verify ───────────────</span>
+<span class="ck">def</span> <span class="cf">verified_extract</span>(text: str, question: str) -> <span class="ca">dict</span>:
+    <span class="cm"># Step 1: extract an answer</span>
+    answer = client.messages.create(
+        model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">256</span>,
+        messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+                   <span class="cs">"content"</span>: <span class="cs">f"From this text:\n{text}\n\nAnswer: {question}"</span>}]
+    ).content[<span class="cn">0</span>].text
+
+    <span class="cm"># Step 2: verify against source</span>
+    ver = client.messages.create(
+        model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">128</span>, temperature=<span class="cn">0.0</span>,
+        messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+                   <span class="cs">"content"</span>: <span class="cs">f"""Is this answer supported by the source?
+Source: {text}
+Answer: {answer}
+JSON: {{"supported": true/false, "evidence": "direct quote or null"}}"""</span>}]
+    ).content[<span class="cn">0</span>].text
+
+    <span class="ck">return</span> {<span class="cs">"answer"</span>: answer, <span class="cs">"verification"</span>: json.loads(ver)}</pre>
+    </div>
+
+    <h3>Hallucination risk by task type</h3>
+    <div class="tw">
+      <table>
+        <tr><th>Task</th><th>Risk</th><th>Primary mitigation</th></tr>
+        <tr><td>Factual Q&amp;A from given document</td><td><span class="risk-low">LOW</span></td><td>Grounding + citations</td></tr>
+        <tr><td>Summarization of provided text</td><td><span class="risk-low">LOW</span></td><td>Grounding</td></tr>
+        <tr><td>Code generation</td><td><span class="risk-mid">MEDIUM</span></td><td>Test execution, version pinning</td></tr>
+        <tr><td>Recent events (past training cutoff)</td><td><span class="risk-high">HIGH</span></td><td>Web search / RAG</td></tr>
+        <tr><td>Specific statistics and numbers</td><td><span class="risk-high">HIGH</span></td><td>Grounding + verification loop</td></tr>
+        <tr><td>Citations and references</td><td><span class="risk-high">HIGH</span></td><td>Never trust — always verify externally</td></tr>
+        <tr><td>Legal / medical / financial advice</td><td><span class="risk-high">HIGH</span></td><td>Human review + grounding only</td></tr>
+        <tr><td>Creative writing</td><td><span class="risk-na">N/A</span></td><td>Hallucination is the feature</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ 10: ROLE PROMPTING ══════════ -->
+  <div class="section" id="roles">
+    <div class="sec-num">10</div>
+    <h2>Role Prompting &amp; Persona Design</h2>
+    <p>Assigning a specific, detailed role shifts the entire response distribution — vocabulary, depth, format, tone, and the examples the model reaches for all change. Vague roles ("expert") produce vague shifts. Specific roles ("principal engineer who debugged production incidents at a bank") produce specific, useful shifts.</p>
+
+    <div class="ba-grid">
+      <div class="ba-card ba-bad">
+        <div class="ba-label">❌ Vague role — weak effect</div>
+        <p>"You are an expert. Explain database indexing."</p>
+      </div>
+      <div class="ba-card ba-good">
+        <div class="ba-label">✓ Specific role — strong effect</div>
+        <p>"You are a senior DB engineer who debugged slow queries on tables with 500M+ rows. Explain indexing using real production examples."</p>
+      </div>
+    </div>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Role design formula + examples</div></div>
+      <pre><span class="cm"># Role design formula:</span>
+<span class="cm"># "You are a {seniority} {job_title} {at/with} {specific context}.</span>
+<span class="cm">#  You have {N} years of experience in {domain}.</span>
+<span class="cm">#  You {distinctive_behavior_1}.</span>
+<span class="cm">#  You {distinctive_behavior_2}.</span>
+<span class="cm">#  You never/always {hard constraint}."</span>
+
+roles = {
+    <span class="cs">"code_reviewer"</span>: <span class="cs">"""You are a principal engineer reviewing code
+for a bank's trading system. You have 12 years in high-stakes
+financial software. You flag security issues, performance
+bottlenecks, and maintainability problems. You cite specific
+failure modes from real production incidents. You never accept
+'good enough' — every review is thorough."""</span>,
+
+    <span class="cs">"data_analyst"</span>: <span class="cs">"""You are a senior data analyst at a product
+analytics company. You think in terms of statistical significance,
+sample sizes, and confounds. You always ask 'what could make this
+interpretation wrong?' before concluding. You present findings with
+confidence intervals, not just point estimates."""</span>,
+
+    <span class="cs">"adversarial_reviewer"</span>: <span class="cs">"""You are a senior engineer tasked
+with finding flaws in plans. Your job is to poke holes, find edge
+cases, and identify what will break in production. You are
+constructively critical — you explain WHY something will fail
+and roughly how likely that failure is."""</span>,
+}
+
+<span class="cm"># Usage in API call</span>
+response = client.messages.create(
+    model=<span class="cs">"claude-sonnet-4-20250514"</span>,
+    max_tokens=<span class="cn">512</span>,
+    system=roles[<span class="cs">"adversarial_reviewer"</span>],
+    messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+               <span class="cs">"content"</span>: <span class="cs">f"Review this architecture proposal:\n\n{proposal}"</span>}]
+)</pre>
+    </div>
+
+    <h3>Multi-persona analysis — get multiple expert views</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Multi-perspective analysis pattern</div></div>
+      <pre><span class="ck">def</span> <span class="cf">multi_perspective_analysis</span>(proposal: str) -> <span class="ca">dict</span>:
+    <span class="cs">"""Get critique from 4 expert roles simultaneously."""</span>
+    perspectives = {
+        <span class="cs">"technical"</span>: <span class="cs">"You are a senior software architect. Identify technical risks."</span>,
+        <span class="cs">"business"</span>:  <span class="cs">"You are a CFO. Identify business and financial risks."</span>,
+        <span class="cs">"security"</span>:  <span class="cs">"You are a CISO. Identify security and compliance risks."</span>,
+        <span class="cs">"user"</span>:      <span class="cs">"You are a UX researcher. Identify user experience risks."</span>,
+    }
+
+    results = {}
+    <span class="ck">for</span> name, role <span class="ck">in</span> perspectives.items():
+        resp = client.messages.create(
+            model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">200</span>,
+            system=role,
+            messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>,
+                       <span class="cs">"content"</span>: <span class="cs">f"Proposal:\n{proposal}\n\nTop 3 risks:"</span>}]
+        )
+        results[name] = resp.content[<span class="cn">0</span>].text
+    <span class="ck">return</span> results
+
+<span class="cm"># Use case: architecture reviews, product decisions, risk assessments</span>
+<span class="cm"># Each perspective catches different blind spots</span></pre>
+    </div>
+  </div>
+
+  <!-- ══════════ 11: NEGATIVE EXAMPLES ══════════ -->
+  <div class="section" id="negative">
+    <div class="sec-num">11</div>
+    <h2>Negative Examples in Prompts</h2>
+    <p>Showing the model what NOT to produce is often more effective than telling it what to produce. Positive instructions are abstract and easy to underweight; concrete bad examples are specific patterns the model can recognize and avoid.</p>
+
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Negative examples for summarization</div></div>
+      <pre><span class="cm"># WITHOUT negative examples — model still writes vague summaries</span>
+without_neg = <span class="cs">"""Summarize the article in 2-3 sentences.
+Be concise and focus on the key points."""</span>
+<span class="cm"># Model might still output: "This article discusses various aspects..."</span>
+
+<span class="cm"># WITH negative examples — much tighter constraint</span>
+with_neg = <span class="cs">"""Summarize the article in 2-3 sentences.
+
+BAD examples (do NOT write like this):
+- "This article discusses various aspects of climate policy."
+  WHY BAD: too vague — what aspects? Says nothing specific.
+- "The author makes several interesting points about the subject."
+  WHY BAD: zero content — this could describe any article.
+- "In this comprehensive analysis, the writer explores how..."
+  WHY BAD: bloated opener using filler words.
+
+GOOD example:
+- "Global temperatures have risen 1.1°C since industrialization.
+   New UN data shows emission cuts need to triple by 2030 to meet
+   Paris targets. The EU's carbon border tax is the most significant
+   policy response so far."
+  WHY GOOD: specific facts, concrete numbers, no filler.
+
+Now summarize:
+{article}"""</span></pre>
+    </div>
+
+    <h3>Before/After pairs — the most powerful format</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Before/After rewrite prompt</div></div>
+      <pre>rewrite_prompt = <span class="cs">"""Rewrite customer support emails to be clearer and more helpful.
+
+BEFORE (do NOT write like this):
+"Dear Customer, We have received your inquiry regarding the matter
+you have contacted us about. Our team is looking into this and we
+will get back to you in due course. Thank you for your patience."
+
+AFTER (write like this):
+"Hi [Name], I looked into your billing issue — you were charged
+twice on March 3rd. I've issued a full refund for $29.99.
+It'll appear in 3-5 business days. Let me know if you need
+anything else."
+
+Key differences:
+- BEFORE: passive, vague, no timeline, no specifics, no resolution
+- AFTER: addresses the actual issue, gives specific action + date,
+  clear timeline, leaves door open without being clingy
+
+Now rewrite this email:
+{email}"""</span></pre>
+    </div>
+
+    <h3>Negative examples for structured outputs</h3>
+    <div class="cb">
+      <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — Preventing JSON failures with negative examples</div></div>
+      <pre>json_strict = <span class="cs">"""Extract event details and return JSON.
+
+WRONG outputs — never do these:
+❌ Adds explanation:  "Here is the extracted JSON: {...}"
+❌ Markdown fences:   ```json {...} ```
+❌ Missing fields:    {"name": "..."} — all fields required
+❌ Invented fields:   {"attendee_count": 500} — not in source text
+❌ Wrong null syntax: {"date": "unknown"} — use null, not strings
+
+CORRECT output — exactly this format:
+{"name": "...", "date": "YYYY-MM-DD", "location": "...", "organizer": "..."}
+
+Extract from:
+{text}"""</span>
+
+<span class="cm"># ── Anti-pattern list (built from real production failures) ───</span>
+anti_pattern = <span class="cs">"""Generate a product description for e-commerce.
+
+Patterns we've measured as causing low conversion (real examples):
+1. "Experience the ultimate..." — overused opener, zero credibility
+2. "Perfect for anyone who wants..." — too vague to create desire
+3. Starting with the brand name — leads with ego, not value
+4. "This product features..." — spec dump, no benefits stated
+5. Bullet lists of specs without explaining WHY each matters
+
+Lead with the problem it solves → evidence it solves it → specs.
+
+Product: {product_details}"""</span></pre>
+    </div>
+
+    <div class="box pink">
+      <div class="box-title">Build your anti-pattern list from real failures</div>
+      <p>The highest-value negative examples are failures you've actually observed in production. Run your prompt on 20–50 inputs. Collect the bad outputs. Annotate each with <em>why</em> it's bad. Add the worst offenders back into the prompt as explicit negatives. This is prompt engineering through empirical feedback — not guessing.</p>
+    </div>
+  </div>
+
+  <!-- ══════════ 12: PROJECT 3 ══════════ -->
+  <div class="section" id="project3">
+    <div class="sec-num">12</div>
+    <h2>Project 3 — Structured Output Engine</h2>
+    <p>Extract structured Pydantic models from unstructured text across 3 document types. Handle JSON refusals, extra text, nested objects, and retry on validation failure.</p>
+
+    <div class="proj">
+      <h4>Project 3 — Full Implementation</h4>
+      <div class="proj-desc">Three schemas, one extraction engine, retry logic, test harness.</div>
+
+      <div class="cb">
+        <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — schemas.py (3 document types)</div></div>
+        <pre><span class="ck">from</span> pydantic <span class="ck">import</span> BaseModel, Field, field_validator
+<span class="ck">from</span> typing <span class="ck">import</span> Optional, List
+<span class="ck">from</span> datetime <span class="ck">import</span> date
+
+<span class="cm"># ── Schema 1: News article ─────────────────────────────────────</span>
+<span class="ck">class</span> <span class="ca">NewsArticle</span>(BaseModel):
+    headline:      str
+    summary:       str
+    published_date: Optional[str] = <span class="cn">None</span>   <span class="cm"># "YYYY-MM-DD" or null</span>
+    key_entities:  List[str]               <span class="cm"># people, orgs, places mentioned</span>
+    sentiment:     str                     <span class="cm"># "positive"/"negative"/"neutral"</span>
+    topics:        List[str]               <span class="cm"># e.g. ["politics", "economy"]</span>
+
+<span class="cm"># ── Schema 2: Job posting ──────────────────────────────────────</span>
+<span class="ck">class</span> <span class="ca">JobPosting</span>(BaseModel):
+    title:            str
+    company:          str
+    location:         str
+    salary_min:       Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    salary_max:       Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    required_skills:  List[str]       = Field(default_factory=list)
+    nice_to_have:     List[str]       = Field(default_factory=list)
+    experience_years: Optional[<span class="ca">int</span>]   = <span class="cn">None</span>
+    remote:           bool             = <span class="cn">False</span>
+    seniority:        str              = <span class="cs">"mid"</span>  <span class="cm"># junior/mid/senior/staff</span>
+
+    <span class="ck">@field_validator</span>(<span class="cs">'seniority'</span>)
+    <span class="ck">@classmethod</span>
+    <span class="ck">def</span> <span class="cf">validate_seniority</span>(cls, v):
+        <span class="ck">return</span> v.lower() <span class="ck">if</span> v.lower() <span class="ck">in</span> [<span class="cs">"junior"</span>,<span class="cs">"mid"</span>,<span class="cs">"senior"</span>,<span class="cs">"staff"</span>,<span class="cs">"principal"</span>] <span class="ck">else</span> <span class="cs">"mid"</span>
+
+<span class="cm"># ── Schema 3: Receipt ─────────────────────────────────────────</span>
+<span class="ck">class</span> <span class="ca">LineItem</span>(BaseModel):
+    description: str
+    quantity:    <span class="ca">float</span> = <span class="cn">1.0</span>
+    unit_price:  <span class="ca">float</span>
+    total:       <span class="ca">float</span>
+
+<span class="ck">class</span> <span class="ca">Receipt</span>(BaseModel):
+    merchant:     str
+    date:         Optional[str]     = <span class="cn">None</span>
+    items:        List[<span class="ca">LineItem</span>]   = Field(default_factory=list)
+    subtotal:     Optional[<span class="ca">float</span>]  = <span class="cn">None</span>
+    tax:          Optional[<span class="ca">float</span>]  = <span class="cn">None</span>
+    total:        <span class="ca">float</span>
+    payment_method: Optional[str]  = <span class="cn">None</span></pre>
+      </div>
+
+      <div class="cb">
+        <div class="cb-hdr"><div class="cb-dots"><div class="cb-dot"></div><div class="cb-dot"></div><div class="cb-dot"></div></div><div class="cb-lang">Python — extractor.py (engine + test harness)</div></div>
+        <pre><span class="ck">import</span> anthropic, json, re, time
+<span class="ck">from</span> typing <span class="ck">import</span> TypeVar, Type
+<span class="ck">from</span> pydantic <span class="ck">import</span> BaseModel
+
+client = anthropic.Anthropic()
+T      = TypeVar(<span class="cs">'T'</span>, bound=<span class="ca">BaseModel</span>)
+
+<span class="ck">def</span> <span class="cf">extract</span>(text: str, schema: Type[T], max_retries=<span class="cn">3</span>) -> T:
+    last_error = raw = <span class="cn">None</span>
+    <span class="ck">for</span> attempt <span class="ck">in</span> <span class="cf">range</span>(max_retries):
+        error_ctx = <span class="cs">""</span>
+        <span class="ck">if</span> last_error:
+            error_ctx = <span class="cs">f"\n\nPrevious attempt failed:\n&lt;prev&gt;{raw}&lt;/prev&gt;\n&lt;error&gt;{last_error}&lt;/error&gt;\nFix it. JSON only."</span>
+
+        prompt = <span class="cs">f"""Extract structured data. Return ONLY valid JSON.
+Schema: {schema.model_json_schema()}
+Rules: no markdown fences, no preamble, null for missing optionals.
+
+&lt;text&gt;{text}&lt;/text&gt;{error_ctx}"""</span>
+
+        raw = client.messages.create(
+            model=<span class="cs">"claude-sonnet-4-20250514"</span>, max_tokens=<span class="cn">1024</span>,
+            temperature=<span class="cn">0.0</span> <span class="ck">if</span> attempt == <span class="cn">0</span> <span class="ck">else</span> <span class="cn">0.3</span>,
+            messages=[{<span class="cs">"role"</span>: <span class="cs">"user"</span>, <span class="cs">"content"</span>: prompt},
+                      {<span class="cs">"role"</span>: <span class="cs">"assistant"</span>, <span class="cs">"content"</span>: <span class="cs">"{"</span>}]  <span class="cm"># prefill</span>
+        ).content[<span class="cn">0</span>].text
+        raw = <span class="cs">"{"</span> + re.sub(<span class="cs">r'^```json\s*|\s*```$'</span>, <span class="cs">''</span>, raw, flags=re.M)
+
+        <span class="ck">try</span>:
+            <span class="ck">return</span> schema(**json.loads(raw))
+        <span class="ck">except</span> <span class="ca">Exception</span> <span class="ck">as</span> e:
+            last_error = <span class="ca">str</span>(e)
+            time.sleep(<span class="cn">0.5</span> * (attempt + <span class="cn">1</span>))
+    <span class="ck">raise</span> <span class="ca">RuntimeError</span>(<span class="cs">f"Failed after {max_retries} attempts: {last_error}"</span>)
+
+<span class="cm"># ── Test harness ───────────────────────────────────────────────</span>
+<span class="ck">if</span> __name__ == <span class="cs">"__main__"</span>:
+    news_text = <span class="cs">"""Apple reported record Q3 earnings of $81.8B in revenue,
+up 5% YoY, driven by strong iPhone 15 sales in emerging markets.
+CEO Tim Cook highlighted growth in India as a key driver. The stock
+rose 3% on the news. Analysts remain bullish heading into Q4."""</span>
+
+    job_text = <span class="cs">"""Senior Machine Learning Engineer at Stripe (San Francisco/Remote)
+$180k-$220k. We're looking for 5+ years ML experience, strong Python,
+PyTorch required, Kubernetes nice to have. You'll own recommendation
+and fraud detection models serving 1M+ TPS."""</span>
+
+    receipt_text = <span class="cs">"""WHOLE FOODS MARKET
+Date: 2024-03-15
+Organic Bananas (2 lb)  x1  $2.49
+Almond Milk             x2  $4.99 ea = $9.98
+Greek Yogurt            x1  $6.79
+--------------------------
+Subtotal: $19.26  Tax: $0.89  TOTAL: $20.15
+Paid: Visa *4242"""</span>
+
+    <span class="ck">from</span> schemas <span class="ck">import</span> NewsArticle, JobPosting, Receipt
+
+    news    = extract(news_text,    NewsArticle)
+    job     = extract(job_text,     JobPosting)
+    receipt = extract(receipt_text, Receipt)
+
+    <span class="cf">print</span>(<span class="cs">"News:"</span>,    news.model_dump_json(indent=<span class="cn">2</span>))
+    <span class="cf">print</span>(<span class="cs">"Job:"</span>,     job.model_dump_json(indent=<span class="cn">2</span>))
+    <span class="cf">print</span>(<span class="cs">"Receipt:"</span>, receipt.model_dump_json(indent=<span class="cn">2</span>))</pre>
+      </div>
+
+      <ul class="proj-steps">
+        <li>Create <code>schemas.py</code> with all 3 Pydantic models</li>
+        <li>Create <code>extractor.py</code> with the retry engine</li>
+        <li>Test on 5 samples per document type (15 total) — measure success rate</li>
+        <li>Log: attempt count, final success/failure, time per extraction</li>
+        <li>Add a 4th schema of your choice (e.g. Product, Event, Invoice)</li>
+        <li>Push to GitHub — README must include success rate table and example outputs</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════ 13: CHECKPOINT ══════════ -->
+  <div class="section" id="checkpoint">
+    <div class="sec-num">13</div>
+    <h2>Week 4 Checkpoint</h2>
+
+    <div class="ckpt">
+      <h4>✦ Mastery checklist</h4>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Zero-shot vs few-shot vs CoT — explain when to use each and why adding examples works mechanistically
+          <span class="csub">Output distribution conditioning, order bias, format inheritance from examples</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">System prompt — write a production-grade 5-component system prompt from scratch
+          <span class="csub">Role, scope, rules, output format, tone — with explicit negative constraints</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">XML extraction — prompt for XML output and parse it with ElementTree
+          <span class="csub">Wrap source in tags, define output schema in prompt, re.search for block, ET.fromstring</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">JSON + Pydantic — define a schema, extract JSON, validate and coerce with Pydantic
+          <span class="csub">BaseModel, field_validator, Optional, List, model_json_schema() in prompt</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Retry logic — implement extract_with_retry that feeds validation errors back into the prompt
+          <span class="csub">Error context injection, temperature bump on retry, exponential backoff</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Prefilling — use 3 different seed strings to control output format
+          <span class="csub">Code block, JSON start, XML tag — and combine prefilling with retry logic</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Hallucination — explain why it happens and apply grounding + citations to a real document
+          <span class="csub">Most-probable-token mechanism, 5 mitigation patterns, risk table by task type</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Role prompting — write a specific role that measurably changes the quality of output
+          <span class="csub">Seniority + context + distinctive behaviors + hard constraints formula</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Negative examples — add before/after pairs and anti-patterns to reduce a specific failure mode
+          <span class="csub">Explain WHY each bad example fails; build the list from real observed failures</span>
+        </div>
+      </div>
+      <div class="ci">
+        <div class="cbox" onclick="this.classList.toggle('checked')"></div>
+        <div class="clabel">Project 3 complete — extraction engine for 3 doc types pushed to GitHub with success rate table
+          <span class="csub">NewsArticle + JobPosting + Receipt, retry logic, test harness, README with examples</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="box green">
+      <div class="box-title">Next — Week 5–6: Prompt Engineering Measurement</div>
+      <p>LLM-as-judge, eval set design with ground truth, A/B testing prompt variants systematically, async parallel LLM calls, prompt chaining, self-critique loops, and statistical significance. Plus Projects 4 and 5: Prompt A/B Testing Framework and Multi-step Prompt Pipeline. Say <strong>"start Week 5 — prompt measurement"</strong> to continue.</p>
+    </div>
+
+    <div class="insight">
+      <h4>🧠 The mental model to carry forward</h4>
+      <p>Every technique in this week is about the same thing: <strong>shaping the probability distribution over output tokens.</strong> Few-shot examples shift it by conditioning. System prompts shift it by framing. CoT shifts it by inserting reasoning tokens that condition better final tokens. Prefilling shifts it by literally forcing the first tokens. Negative examples shift it by making certain token sequences less likely. Once you see all prompting as distribution shaping, every new technique has an obvious place.</p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+  const sections = document.querySelectorAll('.section');
+  const navItems = document.querySelectorAll('.nav-item');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        navItems.forEach(item =>
+          item.classList.toggle('active', item.getAttribute('href') === '#' + id)
+        );
+      }
+    });
+  }, { threshold: 0.2 });
+  sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>
