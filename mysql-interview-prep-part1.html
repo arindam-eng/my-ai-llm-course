@@ -139,11 +139,49 @@ td code{font-size:11px;}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
-@media(max-width:768px){.sb{display:none;}.main{padding:28px 20px;}.hero h1{font-size:34px;}}
+/* MOBILE TOP BAR */
+.mob-nav{display:none;}
+@media(max-width:768px){
+  .mob-nav{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:200;
+  }
+  .mob-nav-left,.mob-nav-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .mob-btn{
+    font-family:var(--mono);font-size:11px;color:var(--text2);text-decoration:none;
+    padding:5px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);
+    white-space:nowrap;transition:color .15s,background .15s;
+  }
+  .mob-btn:hover{color:var(--text);background:var(--bg4);}
+  .mob-btn--accent{color:var(--mysql);border-color:var(--mysql);}
+  .mob-theme{
+    font-family:var(--mono);font-size:11px;color:var(--text2);
+    padding:5px 10px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);
+    cursor:pointer;white-space:nowrap;transition:color .15s,background .15s;
+  }
+  .mob-theme:hover{color:var(--text);}
+  .sb{display:none;}
+  .main{padding:28px 20px;}
+  .hero h1{font-size:34px;}
+}
 @media print{.sb{display:none;}body{background:white;color:black;}}
 </style>
 </head>
 <body>
+
+<!-- ── Mobile top bar (hidden on desktop) ── -->
+<header class="mob-nav" aria-label="Mobile navigation">
+  <div class="mob-nav-left">
+    <a href="index.html" class="mob-btn">&#8962; Home</a>
+    <a href="mysql-learning.html" class="mob-btn">MySQL</a>
+    <a href="mysql-interview-prep-part2.html" class="mob-btn mob-btn--accent">Part 2 &#8594;</a>
+  </div>
+  <div class="mob-nav-right">
+    <button type="button" class="mob-theme" data-theme-toggle aria-label="Switch theme">&#9788; Theme</button>
+  </div>
+</header>
+
 <div class="layout">
 
 <nav class="sb">
